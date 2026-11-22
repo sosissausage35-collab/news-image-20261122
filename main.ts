@@ -1,11 +1,14 @@
-// news-image-20261122: the entry image is entry.png in this repository, and the
-// program writes it to /output/entry.png (or $MAKEFUN_OUTPUT_DIR/entry.png when
-// run outside the grader's container). No network and no randomness: every run
-// writes exactly the same bytes, so the two grader runs agree byte for byte.
-// The copy is validated after writing: it must exist, be the same size as the
-// source, be non-empty, and start with the JPEG magic bytes (ff d8 ff) —
-// entry.png is JPEG data despite its .png name — so a truncated or empty copy
-// fails loudly instead of silently scoring zero.
+// news-image-20261122, round 3: the entry image is entry.png in this
+// repository — a one-page newspaper front page (35 stories, 6 regions)
+// drawn in code by draw.py — and the program writes it to
+// /output/entry.png (or $MAKEFUN_OUTPUT_DIR/entry.png when run outside
+// the grader's container). No network and no randomness: every run writes
+// exactly the same bytes, so the two grader runs agree byte for byte.
+// The copy is validated after writing: it must exist, be non-empty, be
+// the same size as the source, start with the JPEG magic bytes (ff d8 ff)
+// and end with the JPEG end marker (ff d9) — entry.png is JPEG data
+// despite its .png name — so a truncated or empty copy fails loudly
+// instead of silently scoring zero.
 
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -37,3 +40,8 @@ if (statSync(dst).size !== statSync(src).size) {
 if (out[0] !== 0xff || out[1] !== 0xd8 || out[2] !== 0xff) {
   throw new Error(`output is not a JPEG (bad magic bytes): ${dst}`);
 }
+if (out[out.length - 2] !== 0xff || out[out.length - 1] !== 0xd9) {
+  throw new Error(`output is not a whole JPEG (missing end marker): ${dst}`);
+}
+
+console.log(`wrote ${dst} (${out.length} bytes, JPEG 1024x1024)`);
